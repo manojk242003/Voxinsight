@@ -7,9 +7,8 @@ const sentimentAnalyzer = new Sentiment();
 
 const app = express();
 
-// Configure CORS to accept requests from your frontend
 app.use(cors({
-    origin: 'http://localhost:5173', // Vite's default port
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST'],
     credentials: true
 }));
@@ -27,10 +26,8 @@ async function getProductDetails(url) {
 
         const $ = cheerio.load(response.data);
         
-        // Get product name
         const productName = $('#productTitle').text().trim();
         
-        // Get product image
         const productImage = $('#landingImage').attr('src') || 
                            $('#imgBlkFront').attr('src') || 
                            $('#main-image').attr('src');
@@ -53,10 +50,8 @@ app.post("/analyze", async (req, res) => {
             return res.status(400).json({ error: "URL is required" });
         }
 
-        // Get product details first
         const productDetails = await getProductDetails(url);
 
-        // Configure axios request for reviews
         const response = await axios.get(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -75,7 +70,6 @@ app.post("/analyze", async (req, res) => {
         let neutralReviews = 0;
         let reviews = [];
         
-        // Initialize rating distribution
         let ratingDistribution = {
             '5 Stars': 0,
             '4 Stars': 0,
@@ -84,36 +78,29 @@ app.post("/analyze", async (req, res) => {
             '1 Star': 0
         };
 
-        // Process reviews
         $('.review').each((_, review) => {
             const reviewText = $(review).find('.review-text').text().trim();
             const ratingText = $(review).find('.review-rating').text().trim();
-            const rating = parseInt(ratingText) || 3; // Default to 3 if parsing fails
+            const rating = parseInt(ratingText) || 3;
 
-            // Analyze sentiment
             const sentiment = sentimentAnalyzer.analyze(reviewText);
             
-            // Store review data
             reviews.push({
                 text: reviewText,
                 rating: rating,
                 sentiment: sentiment.score
             });
 
-            // Update counters
             reviewCount++;
             if (sentiment.score > 0) positiveReviews++;
             else if (sentiment.score < 0) negativeReviews++;
             else neutralReviews++;
 
-            // Update rating distribution
             const ratingKey = `${rating} Star${rating === 1 ? '' : 's'}`;
             ratingDistribution[ratingKey]++;
         });
 
-        // If no reviews were found, provide sample data
         if (reviewCount === 0) {
-            // Sample data for testing
             positiveReviews = 65;
             neutralReviews = 25;
             negativeReviews = 10;
@@ -126,7 +113,6 @@ app.post("/analyze", async (req, res) => {
             };
             reviewCount = 100;
             
-            // Create sample reviews for sentiment scores
             reviews = [
                 { sentiment: 0.8 },
                 { sentiment: 0.6 },
@@ -135,7 +121,6 @@ app.post("/analyze", async (req, res) => {
             ];
         }
 
-        // Calculate sentiment scores (intensity)
         const positiveScore = reviews.reduce((acc, review) => 
             review.sentiment > 0 ? acc + review.sentiment : acc, 0);
         const negativeScore = Math.abs(reviews.reduce((acc, review) => 
