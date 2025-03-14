@@ -120,7 +120,7 @@ async function getProductDetails(url) {
 
         // Log the HTML content for debugging
         console.log('Response HTML preview:', response.data.substring(0, 500));
-
+i
         const productImage = $('#landingImage').attr('src') || 
                            $('#imgBlkFront').attr('src') || 
                            $('#main-image').attr('src');
