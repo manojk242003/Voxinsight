@@ -6,6 +6,8 @@ const Sentiment = require('sentiment');
 const sentimentAnalyzer = new Sentiment();
 const https = require('https');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const puppeteer = require('puppeteer');
+const { getFlipkartReviews } = require('./flipkartScraper');
 require('dotenv').config();
 
 // Create a custom axios instance with configuration
@@ -120,7 +122,7 @@ async function getProductDetails(url) {
 
         // Log the HTML content for debugging
         console.log('Response HTML preview:', response.data.substring(0, 500));
-i
+
         const productImage = $('#landingImage').attr('src') || 
                            $('#imgBlkFront').attr('src') || 
                            $('#main-image').attr('src');
@@ -456,6 +458,26 @@ app.post("/analyze", async (req, res) => {
             },
             totalReviews: 0
         });
+    }
+});
+
+app.post("/analyzeFlipkart", async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) {
+            return res.status(400).json({ error: "URL is required" });
+        }
+
+        const reviews = await getFlipkartReviews(url);
+        const aiFeedback = await getAIProductFeedback(reviews, "N/A");
+
+        res.json({
+            aiFeedback,
+            reviewCount: reviews.length
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: "Failed to analyze the Flipkart URL", details: error.message });
     }
 });
 
