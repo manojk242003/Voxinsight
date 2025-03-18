@@ -10,7 +10,7 @@ async function getFlipkartReviews(url) {
     await page.goto(productUrl);
 
     let allReviews = [];
-    const maxPages = 20; // Maximum number of pages to scrape
+    const maxPages = 50; // Maximum number of pages to scrape
     let pageNumber = 1; // Start from page 1
 
     // Function to extract reviews from a given selector

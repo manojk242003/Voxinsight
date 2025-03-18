@@ -354,24 +354,145 @@ function Home() {
   const renderFlipkartFeedback = (data) => {
     if (!data) return null;
 
-    return (
-        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md mt-8 w-full max-w-5xl">
-            <h2 className="text-lg font-semibold mb-4 text-gray-200">AI Feedback [Flipkart] </h2>
-            <div className="text-base text-gray-300 space-y-3 leading-relaxed">
-                {data.aiFeedback ? (
-                    data.aiFeedback.split("\n").map((line, index) => {
-                        let formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-100">$1</strong>');
+    const sentimentData = {
+      labels: ['Positive', 'Negative', 'Neutral'],
+      datasets: [
+        {
+          data: [
+            data.fsentimentData.positive,
+            data.fsentimentData.negative,
+            data.fsentimentData.neutral
+          ],
+          backgroundColor: ["#00da0b", "#ff0000", "#fbff00"],
+          borderWidth: 0,
+          hoverOffset: 20,
+        },
+      ],
+    };
 
-                        return <p key={index} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
-                    })
-                ) : (
-                    <p>N/A</p>
-                )}
+    const intensityData = {
+      labels: ["Positive", "Negative"],
+      datasets: [
+        {
+          label: "Positive",
+          data: [data.fsentimentScores?.positive || 0, 0],
+          backgroundColor: "#00da0b",
+          borderRadius: 4,
+        },
+        {
+          label: "Negative",
+          data: [0, data.fsentimentScores?.negative || 0],
+          backgroundColor: "#ff0000",
+          borderRadius: 4,
+        },
+      ],
+    };
+
+    return (
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-white mb-4 text-center">
+          FLIPKART Analysis Results
+        </h2>
+        
+        {/* Product Details Section */}
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md w-full max-w-5xl mb-8">
+          <div className="flex items-start gap-8">
+            {data.fproductDetails?.fproductImage && (
+              <div className="w-48 h-48 overflow-hidden rounded-lg bg-white p-2">
+                <img 
+                  src={data.fproductDetails.fproductImage} 
+                  alt="Product" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-white mb-4">
+                {data.fproductDetails?.fproductName || 'Product Analysis'}
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#1E293B] p-4 rounded-lg">
+                  <p className="text-gray-400">Total Reviews</p>
+                  <p className="text-2xl font-bold text-white">{data.freviewCount}</p>
+                </div>
+                <div className="bg-[#1E293B] p-4 rounded-lg">
+                  <p className="text-gray-400">Average Score</p>
+                  <p className="text-2xl font-bold text-white">{data.fproductDetails.faverageScore}/5</p>
+                </div>
+              </div>
             </div>
-            <div className="mt-4 text-gray-300">
-                <p>Total Reviews Scraped: <strong>{data.reviewCount}</strong></p>
-            </div>
+          </div>
         </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-5xl">
+          <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md">
+            <h2 className="text-lg font-semibold mb-4 text-gray-200">
+              Sentiment Distribution
+            </h2>
+            <div className="h-64">
+              <Doughnut data={sentimentData} options={chartOptions} />
+            </div>
+          </div>
+          <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md">
+            <h2 className="text-lg font-semibold mb-4 text-gray-200">
+              Review Intensity
+            </h2>
+            <div className="h-64">
+              <Bar data={intensityData} options={chartOptions} />
+            </div>
+          </div>
+        </div>
+
+        {/* Star Distribution Section */}
+        {renderStarDistribution(data.fproductDetails.fratingDistribution, data.fproductDetails.ftotalRatings)}
+
+        {/* Sentiment Summary */}
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md mt-8 w-full max-w-5xl">
+          <h2 className="text-lg font-semibold mb-4 text-gray-200">
+            Sentiment Summary
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-[#1E293B] p-4 rounded-lg text-center">
+              <p className="text-green-400 text-2xl font-bold">
+                {((data.fsentimentData.positive / data.freviewCount) * 100).toFixed(1)}%
+              </p>
+              <p className="text-gray-400 mt-1">Positive</p>
+            </div>
+            <div className="bg-[#1E293B] p-4 rounded-lg text-center">
+              <p className="text-yellow-400 text-2xl font-bold">
+                {((data.fsentimentData.neutral / data.freviewCount) * 100).toFixed(1)}%
+              </p>
+              <p className="text-gray-400 mt-1">Neutral</p>
+            </div>
+            <div className="bg-[#1E293B] p-4 rounded-lg text-center">
+              <p className="text-red-400 text-2xl font-bold">
+                {((data.fsentimentData.negative / data.freviewCount) * 100).toFixed(1)}%
+              </p>
+              <p className="text-gray-400 mt-1">Negative</p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Feedback Section */}
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md mt-8 w-full max-w-5xl">
+          <h2 className="text-lg font-semibold mb-4 text-gray-200">AI Feedback [Flipkart] </h2>
+          <div className="text-base text-gray-300 space-y-3 leading-relaxed">
+              {data.aiFeedback ? (
+                  data.aiFeedback.split("\n").map((line, index) => {
+                      let formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-100">$1</strong>');
+
+                      return <p key={index} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+                  })
+              ) : (
+                  <p>N/A</p>
+              )}
+          </div>
+          <div className="mt-4 text-gray-300">
+              <p>Total Reviews Scraped: <strong>{data.freviewCount}</strong></p>
+          </div>
+        </div>
+      </div>
     );
   };
 
