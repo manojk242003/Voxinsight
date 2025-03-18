@@ -23,19 +23,23 @@ ChartJS.register(
 
 function Home() {
   const [amazonUrl, setAmazonUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [flipkartUrl, setFlipkartUrl] = useState("");
+  const [amazonLoading, setAmazonLoading] = useState(false);
+  const [flipkartLoading, setFlipkartLoading] = useState(false);
   const [amazonData, setAmazonData] = useState(null);
-  const [error, setError] = useState(null);
+  const [flipkartData, setFlipkartData] = useState(null);
+  const [amazonError, setAmazonError] = useState(null);
+  const [flipkartError, setFlipkartError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!amazonUrl) {
-      setError("Please enter an Amazon product URL");
+      setAmazonError("Please enter an Amazon product URL");
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    setAmazonLoading(true);
+    setAmazonError(null);
 
     try {
       const amazonResponse = await fetch('http://localhost:5000/analyze', {
@@ -52,10 +56,42 @@ function Home() {
       }
       setAmazonData(amazonResult);
     } catch (err) {
-      setError(err.message || 'Failed to analyze URL. Please try again.');
+      setAmazonError(err.message || 'Failed to analyze URL. Please try again.');
       console.error('Error:', err);
     } finally {
-      setLoading(false);
+      setAmazonLoading(false);
+    }
+  };
+
+  const handleFlipkartSubmit = async (e) => {
+    e.preventDefault();
+    if (!flipkartUrl) {
+      setFlipkartError("Please enter a Flipkart product URL");
+      return;
+    }
+
+    setFlipkartLoading(true);
+    setFlipkartError(null);
+
+    try {
+      const flipkartResponse = await fetch('http://localhost:5000/analyzeFlipkart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: flipkartUrl }),
+      });
+
+      const flipkartResult = await flipkartResponse.json();
+      if (!flipkartResponse.ok) {
+        throw new Error(flipkartResult.error || 'Flipkart analysis failed');
+      }
+      setFlipkartData(flipkartResult);
+    } catch (err) {
+      setFlipkartError(err.message || 'Failed to analyze Flipkart URL. Please try again.');
+      console.error('Error:', err);
+    } finally {
+      setFlipkartLoading(false);
     }
   };
 
@@ -315,6 +351,30 @@ function Home() {
     },
   };
 
+  const renderFlipkartFeedback = (data) => {
+    if (!data) return null;
+
+    return (
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md mt-8 w-full max-w-5xl">
+            <h2 className="text-lg font-semibold mb-4 text-gray-200">AI Feedback [Flipkart] </h2>
+            <div className="text-base text-gray-300 space-y-3 leading-relaxed">
+                {data.aiFeedback ? (
+                    data.aiFeedback.split("\n").map((line, index) => {
+                        let formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-100">$1</strong>');
+
+                        return <p key={index} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+                    })
+                ) : (
+                    <p>N/A</p>
+                )}
+            </div>
+            <div className="mt-4 text-gray-300">
+                <p>Total Reviews Scraped: <strong>{data.reviewCount}</strong></p>
+            </div>
+        </div>
+    );
+  };
+
   return (
     <div className="w-full min-h-screen p-8 bg-[#0F172A] flex flex-col items-center">
       {/* Search Form */}
@@ -330,7 +390,8 @@ function Home() {
             />
             <div className="flex items-center">
               <img 
-                src="/amazon-logo.png" 
+                src="/amazon-logo.png"
+                
                 alt="Amazon Logo" 
                 className="w-10 h-10 ml-2"
               />
@@ -338,21 +399,56 @@ function Home() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={amazonLoading}
             className="w-full px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg disabled:opacity-50"
           >
-            {loading ? 'Analyzing...' : 'Analyze'}
+            {amazonLoading ? 'Analyzing...' : 'Analyze Amazon'}
           </button>
         </div>
-        {error && (
+        {amazonError && (
           <div className="mt-2 text-red-500 bg-red-500/10 p-2 rounded">
-            {error}
+            {amazonError}
+          </div>
+        )}
+      </form>
+
+      {/* Flipkart Form */}
+      <form onSubmit={handleFlipkartSubmit} className="w-full max-w-2xl mb-8">
+        <div className="flex flex-col gap-4">
+          <div className="flex w-full gap-3">
+            <input
+              type="text"
+              placeholder="Enter Flipkart product URL"
+              value={flipkartUrl}
+              onChange={(e) => setFlipkartUrl(e.target.value)}
+              className="flex-1 px-4 py-3 bg-black/70 backdrop-blur-md rounded-lg text-white placeholder-gray-400 border border-gray-700"
+            />
+            <div className="flex items-center">
+              <img 
+                src="/flipkart-logo.png" 
+                alt="Flipkart Logo" 
+                className="w-10 h-10 ml-2"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={flipkartLoading}
+            className="w-full px-8 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-blue-500 transition-all shadow-lg disabled:opacity-50"
+          >
+            {flipkartLoading ? 'Analyzing...' : 'Analyze Flipkart'}
+          </button>
+        </div>
+        {flipkartError && (
+          <div className="mt-2 text-red-500 bg-red-500/10 p-2 rounded">
+            {flipkartError}
           </div>
         )}
       </form>
 
       {/* Analysis Results */}
       {amazonData && renderAnalysis(amazonData, 'amazon')}
+      {flipkartData && renderFlipkartFeedback(flipkartData)}
     </div>
   );
 }

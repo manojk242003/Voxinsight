@@ -6,6 +6,8 @@ const Sentiment = require('sentiment');
 const sentimentAnalyzer = new Sentiment();
 const https = require('https');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const puppeteer = require('puppeteer');
+const { getFlipkartReviews } = require('./flipkartScraper');
 require('dotenv').config();
 
 // Create a custom axios instance with configuration
@@ -64,6 +66,8 @@ app.use(express.json());
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+let lastAnalysisResult = null; // Variable to store the last analysis result
+
 async function getProductDetails(url) {
     try {
         const headers = {
@@ -120,7 +124,7 @@ async function getProductDetails(url) {
 
         // Log the HTML content for debugging
         console.log('Response HTML preview:', response.data.substring(0, 500));
-i
+
         const productImage = $('#landingImage').attr('src') || 
                            $('#imgBlkFront').attr('src') || 
                            $('#main-image').attr('src');
@@ -339,7 +343,7 @@ app.post("/analyze", async (req, res) => {
         } catch (error) {
             console.error('Error fetching reviews:', error);
             // Return product details without reviews
-            return res.json({
+            lastAnalysisResult = {
                 productDetails,
                 sentimentData: {
                     positive: 0,
@@ -351,7 +355,8 @@ app.post("/analyze", async (req, res) => {
                     negative: 0
                 },
                 totalReviews: productDetails.totalRatings
-            });
+            };
+            return res.json(lastAnalysisResult);
         }
 
         const $ = cheerio.load(response.data);
@@ -412,7 +417,7 @@ app.post("/analyze", async (req, res) => {
         const reviewsText = reviews.map(review => review.text);
         const aiFeedback = await getAIProductFeedback(reviewsText, productDetails.averageScore);
 
-        res.json({
+        lastAnalysisResult = {
             productDetails,
             sentimentData: {
                 positive: positiveReviews,
@@ -425,11 +430,13 @@ app.post("/analyze", async (req, res) => {
             },
             totalReviews: reviewCount,
             aiFeedback
-        });
+        };
+
+        res.json(lastAnalysisResult);
 
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ 
+        lastAnalysisResult = { 
             error: "Failed to analyze the URL",
             details: error.message,
             productDetails: {
@@ -455,7 +462,37 @@ app.post("/analyze", async (req, res) => {
                 negative: 0
             },
             totalReviews: 0
+        };
+        res.status(500).json(lastAnalysisResult);
+    }
+});
+
+// Add a GET endpoint to return the last analysis result
+app.get("/analyze", (req, res) => {
+    if (lastAnalysisResult) {
+        res.json(lastAnalysisResult);
+    } else {
+        res.status(404).json({ error: "No analysis result available" });
+    }
+});
+
+app.post("/analyzeFlipkart", async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) {
+            return res.status(400).json({ error: "URL is required" });
+        }
+
+        const reviews = await getFlipkartReviews(url);
+        const aiFeedback = await getAIProductFeedback(reviews, "N/A");
+
+        res.json({
+            aiFeedback,
+            reviewCount: reviews.length
         });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: "Failed to analyze the Flipkart URL", details: error.message });
     }
 });
 
