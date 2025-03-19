@@ -10,7 +10,7 @@ async function getFlipkartReviews(url) {
     await page.goto(productUrl);
 
     let allReviews = [];
-    const maxPages = 20; // Maximum number of pages to scrape
+    const maxPages = 50; // Maximum number of pages to scrape
     let pageNumber = 1; // Start from page 1
 
     // Function to extract reviews from a given selector
@@ -21,7 +21,7 @@ async function getFlipkartReviews(url) {
             });
             const reviews = await page.$$eval(selector, (reviewDivs) => {
                 return reviewDivs.map((div) => {
-                    const reviewText = div.querySelector('div.ZmyHeo')?.textContent.trim() || ''; 
+                    const reviewText = div.querySelector('div.ZmyHeo')?.textContent.trim() || ''; // Adjust if needed
                     return reviewText;
                 });
             });
@@ -32,7 +32,7 @@ async function getFlipkartReviews(url) {
         }
     }
 
-    //Click on "All Reviews" button 
+    //Click on "All Reviews" button with a more robust approach
     try {
         await page.waitForSelector('._23J90q.RcXBOT', {
             timeout: 5000
@@ -107,7 +107,7 @@ async function getFlipkartReviews(url) {
         }
     }
 
-   
+    // No duplicate removal this time
 
     console.log(`Total reviews scraped: ${allReviews.length}`);
     console.log("All Reviews :");

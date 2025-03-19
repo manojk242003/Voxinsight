@@ -65,9 +65,11 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+let lastAnalysisResult = null;
+let FlastAnalysisResult = null;
 
 async function getProductDetails(url) {
-    try {
+   
         const headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -230,27 +232,7 @@ async function getProductDetails(url) {
             totalRatings,
             averageScore
         };
-    } catch (error) {
-        console.error('Error fetching product details:', error);
-        if (error.response) {
-            console.log('Response status:', error.response.status);
-            console.log('Response headers:', error.response.headers);
-        }
-        // Return default values instead of null
-        return {
-            productName: "Product Not Found",
-            productImage: "",
-            ratingDistribution: {
-                '5 Stars': 0,
-                '4 Stars': 0,
-                '3 Stars': 0,
-                '2 Stars': 0,
-                '1 Star': 0
-            },
-            totalRatings: 0,
-            averageScore: "0.0"
-        };
-    }
+    
 }
 
 async function getAIProductFeedback(reviews, averageScore) {
@@ -264,8 +246,61 @@ async function getAIProductFeedback(reviews, averageScore) {
     }
 }
 
-app.post("/analyze", async (req, res) => {
+async function FgetProductDetails(url) {
+    let browser;
     try {
+        browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
+        
+        // Set user agent
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+        
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+
+        // Extract product details
+        const fproductName = await page.$eval('h1._6EBuvT span.VU-ZEz', el => el.textContent.trim());
+        const fproductImage = await page.$eval('img.DByuf4.IZexXJ.jLEJ7H', el => el.src);
+
+        // Update selectors for rating distribution
+        const fratingDistribution = {
+            '5 Stars': parseInt(await page.$eval('ul.\\+psZUR li:nth-child(1) .BArk-j', el => el.textContent.replace(/,/g, '')), 10),
+            '4 Stars': parseInt(await page.$eval('ul.\\+psZUR li:nth-child(2) .BArk-j', el => el.textContent.replace(/,/g, '')), 10),
+            '3 Stars': parseInt(await page.$eval('ul.\\+psZUR li:nth-child(3) .BArk-j', el => el.textContent.replace(/,/g, '')), 10),
+            '2 Stars': parseInt(await page.$eval('ul.\\+psZUR li:nth-child(4) .BArk-j', el => el.textContent.replace(/,/g, '')), 10),
+            '1 Star': parseInt(await page.$eval('ul.\\+psZUR li:nth-child(5) .BArk-j', el => el.textContent.replace(/,/g, '')), 10)
+        };
+
+        const ftotalRatings = Object.values(fratingDistribution).reduce((acc, val) => acc + val, 0);
+
+        const faverageScore = await page.$eval('div.XQDdHH', el => el.textContent.trim()) || "0.0";
+
+        console.log('Scraped Data:', {
+            fproductName,
+            fproductImage,
+            fratingDistribution,
+            ftotalRatings,
+            faverageScore
+        });
+
+        return {
+            fproductName,
+            fproductImage,
+            fratingDistribution,
+            ftotalRatings,
+            faverageScore
+        };
+    } catch (error) {
+        console.error('Error fetching product details with Puppeteer:', error.message);
+        throw new Error('Failed to fetch product details');
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+    }
+}
+
+app.post("/analyze", async (req, res) => {
+  
         const { url, platform } = req.body;
         
         if (!url) {
@@ -273,58 +308,12 @@ app.post("/analyze", async (req, res) => {
         }
 
         let productDetails;
-        let maxRetries = 3;
-        let retryCount = 0;
-
-        while (retryCount < maxRetries) {
-            try {
-                productDetails = await getProductDetails(url);
-                break;
-            } catch (error) {
-                retryCount++;
-                console.error(`Attempt ${retryCount}/${maxRetries} failed:`, error.message);
-                
-                if (retryCount === maxRetries) {
-                    console.error(`Error fetching ${platform} product details after ${maxRetries} attempts:`, error);
-                    return res.status(500).json({
-                        error: `Failed to fetch ${platform} product details after ${maxRetries} attempts`,
-                        details: error.message,
-                        productDetails: {
-                            productName: "Product Not Found",
-                            productImage: "",
-                            ratingDistribution: {
-                                '5 Stars': 0,
-                                '4 Stars': 0,
-                                '3 Stars': 0,
-                                '2 Stars': 0,
-                                '1 Star': 0
-                            },
-                            totalRatings: 0,
-                            averageScore: "0.0"
-                        },
-                        sentimentData: {
-                            positive: 0,
-                            neutral: 0,
-                            negative: 0
-                        },
-                        sentimentScores: {
-                            positive: 0,
-                            negative: 0
-                        },
-                        totalReviews: 0
-                    });
-                }
-
-                // Wait before retrying with exponential backoff
-                const backoffDelay = Math.min(1000 * (2 ** retryCount), 10000);
-                await new Promise(resolve => setTimeout(resolve, backoffDelay));
-            }
-        }
-
+    
+          productDetails = await getProductDetails(url);
+        
         if (!productDetails) {
             throw new Error('Failed to fetch product details');
         }
-
         const headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -336,25 +325,8 @@ app.post("/analyze", async (req, res) => {
         };
 
         let response;
-        try {
-            response = await instance.get(url, { headers });
-        } catch (error) {
-            console.error('Error fetching reviews:', error);
-            // Return product details without reviews
-            return res.json({
-                productDetails,
-                sentimentData: {
-                    positive: 0,
-                    neutral: 0,
-                    negative: 0
-                },
-                sentimentScores: {
-                    positive: 0,
-                    negative: 0
-                },
-                totalReviews: productDetails.totalRatings
-            });
-        }
+                response = await instance.get(url, { headers });
+        
 
         const $ = cheerio.load(response.data);
         
@@ -414,7 +386,7 @@ app.post("/analyze", async (req, res) => {
         const reviewsText = reviews.map(review => review.text);
         const aiFeedback = await getAIProductFeedback(reviewsText, productDetails.averageScore);
 
-        res.json({
+        lastAnalysisResult = {
             productDetails,
             sentimentData: {
                 positive: positiveReviews,
@@ -427,37 +399,16 @@ app.post("/analyze", async (req, res) => {
             },
             totalReviews: reviewCount,
             aiFeedback
-        });
+        };
+        res.json(lastAnalysisResult);
 
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ 
-            error: "Failed to analyze the URL",
-            details: error.message,
-            productDetails: {
-                productName: "Error Processing Request",
-                productImage: "",
-                ratingDistribution: {
-                    '5 Stars': 0,
-                    '4 Stars': 0,
-                    '3 Stars': 0,
-                    '2 Stars': 0,
-                    '1 Star': 0
-                },
-                totalRatings: 0,
-                averageScore: "0.0"
-            },
-            sentimentData: {
-                positive: 0,
-                neutral: 0,
-                negative: 0
-            },
-            sentimentScores: {
-                positive: 0,
-                negative: 0
-            },
-            totalReviews: 0
-        });
+    
+});
+app.get("/analyze", (req, res) => {
+    if (lastAnalysisResult) {
+        res.json(lastAnalysisResult);
+    } else {
+        res.status(404).json({ error: "No analysis result available" });
     }
 });
 
@@ -468,16 +419,60 @@ app.post("/analyzeFlipkart", async (req, res) => {
             return res.status(400).json({ error: "URL is required" });
         }
 
-        const reviews = await getFlipkartReviews(url);
-        const aiFeedback = await getAIProductFeedback(reviews, "N/A");
+        // Fetch product details first
+        const fproductDetails = await FgetProductDetails(url);
 
-        res.json({
-            aiFeedback,
-            reviewCount: reviews.length
+        // Then fetch reviews
+        const reviews = await getFlipkartReviews(url);
+
+        // Use fproductDetails for AI feedback
+        const aiFeedback = await getAIProductFeedback(reviews, fproductDetails.faverageScore);
+
+        const freviewCount = reviews.length;
+        let fpositiveReviews = 0;
+        let fnegativeReviews = 0;
+        let fneutralReviews = 0;
+
+        reviews.forEach(review => {
+            const sentiment = sentimentAnalyzer.analyze(review);
+            if (sentiment.score > 0) fpositiveReviews++;
+            else if (sentiment.score < 0) fnegativeReviews++;
+            else fneutralReviews++;
         });
+
+        const fpositiveScore = reviews.reduce((acc, review) => 
+            sentimentAnalyzer.analyze(review).score > 0 ? acc + sentimentAnalyzer.analyze(review).score : acc, 0);
+        const fnegativeScore = Math.abs(reviews.reduce((acc, review) => 
+            sentimentAnalyzer.analyze(review).score < 0 ? acc + sentimentAnalyzer.analyze(review).score : acc, 0));
+
+        FlastAnalysisResult = {
+            fproductDetails,
+            fsentimentData: {
+                positive: fpositiveReviews,
+                neutral: fneutralReviews,
+                negative: fnegativeReviews
+            },
+            fsentimentScores: {
+                positive: fpositiveScore,
+                negative: fnegativeScore
+            },
+            freviewCount,
+            aiFeedback
+        }
+        res.json(FlastAnalysisResult);
+        
+        
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: "Failed to analyze the Flipkart URL", details: error.message });
+    }
+});
+
+app.get("/analyzeFlipkart", (req, res) => {
+    if (FlastAnalysisResult) {
+        res.json(FlastAnalysisResult);
+    } else {
+        res.status(404).json({ error: "No analysis result available" });
     }
 });
 
