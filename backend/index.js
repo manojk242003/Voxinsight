@@ -8,7 +8,9 @@ const https = require('https');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const puppeteer = require('puppeteer');
 const { getFlipkartReviews } = require('./flipkartScraper');
+const {getMyntraReviews}=require('./myntraScraper');
 require('dotenv').config();
+
 
 // Create a custom axios instance with configuration
 const instance = axios.create({
@@ -55,11 +57,7 @@ instance.interceptors.response.use(undefined, async (err) => {
 
 const app = express();
 
-app.use(cors({
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    credentials: true
-}));
+app.use(cors());
 
 app.use(express.json());
 
@@ -296,112 +294,136 @@ async function FgetProductDetails(url) {
         }
     }
 }
+async function getMyntraProductDetails(url) {
+    const browser = await puppeteer.launch({ headless: false });
+    const page = await browser.newPage();
+
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    try {
+        // Extract product details
+        const productDetails = await page.evaluate(() => {
+            return {
+                name: document.querySelector('.pdp-title')?.innerText.trim() || 'N/A',
+                brand: document.querySelector('.pdp-brand')?.innerText.trim() || 'N/A',
+                price: document.querySelector('.pdp-price')?.innerText.trim() || 'N/A',
+                description: document.querySelector('.pdp-productDescriptorsContainer')?.innerText.trim() || 'N/A',
+                imageUrl: document.querySelector('.image-grid-image')?.src || '',
+            };
+        })
+    }
+    catch(error){
+        console.error(error);
+
+    }
+}
+
+        
 
 app.post("/analyze", async (req, res) => {
-  
-        const { url, platform } = req.body;
-        
+    try {
+        const { url } = req.body;
         if (!url) {
             return res.status(400).json({ error: "URL is required" });
         }
 
-        let productDetails;
-    
-          productDetails = await getProductDetails(url);
-        
-        if (!productDetails) {
-            throw new Error('Failed to fetch product details');
-        }
-        const headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        };
+        // Fetch product details first
+        const fproductDetails = await FgetProductDetails(url);
 
-        let response;
-                response = await instance.get(url, { headers });
-        
+        // Then fetch reviews
+        const reviews = await getFlipkartReviews(url);
 
-        const $ = cheerio.load(response.data);
-        
-        let reviewCount = 0;
-        let positiveReviews = 0;
-        let negativeReviews = 0;
-        let neutralReviews = 0;
-        let reviews = [];
+        // Use fproductDetails for AI feedback
+        const aiFeedback = await getAIProductFeedback(reviews, fproductDetails.faverageScore);
 
-        $('.review').each((_, review) => {
-            const reviewText = $(review).find('.review-text').text().trim();
-            const ratingText = $(review).find('.review-rating').text().trim();
-            const rating = parseInt(ratingText) || 3;
+        const freviewCount = reviews.length;
+        let fpositiveReviews = 0;
+        let fnegativeReviews = 0;
+        let fneutralReviews = 0;
 
-            const sentiment = sentimentAnalyzer.analyze(reviewText);
-            
-            reviews.push({
-                text: reviewText,
-                rating: rating,
-                sentiment: sentiment.score
-            });
-
-            reviewCount++;
-            if (sentiment.score > 0) positiveReviews++;
-            else if (sentiment.score < 0) negativeReviews++;
-            else neutralReviews++;
+        reviews.forEach(review => {
+            const sentiment = sentimentAnalyzer.analyze(review);
+            if (sentiment.score > 0) fpositiveReviews++;
+            else if (sentiment.score < 0) fnegativeReviews++;
+            else fneutralReviews++;
         });
 
-        // If no reviews found, use the product details rating distribution
-        if (reviewCount === 0) {
-            reviewCount = productDetails.totalRatings;
-            // Calculate sentiment distribution based on rating distribution
-            const totalPositiveRatings = productDetails.ratingDistribution['5 Stars'] + productDetails.ratingDistribution['4 Stars'];
-            const totalNeutralRatings = productDetails.ratingDistribution['3 Stars'];
-            const totalNegativeRatings = productDetails.ratingDistribution['2 Stars'] + productDetails.ratingDistribution['1 Star'];
-            
-            const total = totalPositiveRatings + totalNeutralRatings + totalNegativeRatings;
-            if (total > 0) {
-                positiveReviews = Math.round((totalPositiveRatings / total) * reviewCount);
-                neutralReviews = Math.round((totalNeutralRatings / total) * reviewCount);
-                negativeReviews = reviewCount - positiveReviews - neutralReviews;
-            }
-            
-            // Generate sample sentiment scores
-            reviews = [
-                { sentiment: 0.8, count: positiveReviews },
-                { sentiment: 0.0, count: neutralReviews },
-                { sentiment: -0.7, count: negativeReviews }
-            ];
-        }
-
-        const positiveScore = reviews.reduce((acc, review) => 
-            review.sentiment > 0 ? acc + (review.sentiment * (review.count || 1)) : acc, 0);
-        const negativeScore = Math.abs(reviews.reduce((acc, review) => 
-            review.sentiment < 0 ? acc + (review.sentiment * (review.count || 1)) : acc, 0));
-
-        const reviewsText = reviews.map(review => review.text);
-        const aiFeedback = await getAIProductFeedback(reviewsText, productDetails.averageScore);
+        const fpositiveScore = reviews.reduce((acc, review) => 
+            sentimentAnalyzer.analyze(review).score > 0 ? acc + sentimentAnalyzer.analyze(review).score : acc, 0);
+        const fnegativeScore = Math.abs(reviews.reduce((acc, review) => 
+            sentimentAnalyzer.analyze(review).score < 0 ? acc + sentimentAnalyzer.analyze(review).score : acc, 0));
 
         res.json({
-            productDetails,
-            sentimentData: {
-                positive: positiveReviews,
-                neutral: neutralReviews,
-                negative: negativeReviews
+            fproductDetails,
+            fsentimentData: {
+                positive: fpositiveReviews,
+                neutral: fneutralReviews,
+                negative: fnegativeReviews
             },
-            sentimentScores: {
-                positive: positiveScore,
-                negative: negativeScore
+            fsentimentScores: {
+                positive: fpositiveScore,
+                negative: fnegativeScore
             },
-            totalReviews: reviewCount,
+            freviewCount,
             aiFeedback
         });
-
-    
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: "Failed to analyze the Flipkart URL", details: error.message });
+    }
 });
+app.post("/analyzemyntra", async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) {
+            return res.status(400).json({ error: "URL is required" });
+        }
 
+        // Fetch product details first
+        const mproductDetails = await  getMyntraProductDetails(url);
+
+        // Then fetch reviews
+        const reviews = await getMyntraReviews(url);
+
+        // Use fproductDetails for AI feedback
+        const aiFeedback = await getAIProductFeedback(reviews, mproductDetails.faverageScore);
+
+        const freviewCount = reviews.length;
+        let fpositiveReviews = 0;
+        let fnegativeReviews = 0;
+        let fneutralReviews = 0;
+
+        reviews.forEach(review => {
+            const sentiment = sentimentAnalyzer.analyze(review);
+            if (sentiment.score > 0) fpositiveReviews++;
+            else if (sentiment.score < 0) fnegativeReviews++;
+            else fneutralReviews++;
+        });
+
+        const fpositiveScore = reviews.reduce((acc, review) => 
+            sentimentAnalyzer.analyze(review).score > 0 ? acc + sentimentAnalyzer.analyze(review).score : acc, 0);
+        const fnegativeScore = Math.abs(reviews.reduce((acc, review) => 
+            sentimentAnalyzer.analyze(review).score < 0 ? acc + sentimentAnalyzer.analyze(review).score : acc, 0));
+
+        res.json({
+            mproductDetails,
+            fsentimentData: {
+                positive: fpositiveReviews,
+                neutral: fneutralReviews,
+                negative: fnegativeReviews
+            },
+            fsentimentScores: {
+                positive: fpositiveScore,
+                negative: fnegativeScore
+            },
+            freviewCount,
+            aiFeedback
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: "Failed to analyze the myntra URL", details: error.message });
+    }
+});
 app.post("/analyzeFlipkart", async (req, res) => {
     try {
         const { url } = req.body;
@@ -454,6 +476,7 @@ app.post("/analyzeFlipkart", async (req, res) => {
         res.status(500).json({ error: "Failed to analyze the Flipkart URL", details: error.message });
     }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

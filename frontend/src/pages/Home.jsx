@@ -21,15 +21,19 @@ ChartJS.register(
   Title
 );
 
-function Home() {
+function Home_() {
   const [amazonUrl, setAmazonUrl] = useState("");
   const [flipkartUrl, setFlipkartUrl] = useState("");
+  const [myntraUrl, setMyntraUrl] = useState("");
   const [amazonLoading, setAmazonLoading] = useState(false);
   const [flipkartLoading, setFlipkartLoading] = useState(false);
+  const [myntraLoading, setMyntraLoading] = useState(false);
   const [amazonData, setAmazonData] = useState(null);
   const [flipkartData, setFlipkartData] = useState(null);
+  const [myntraData, setMyntraData] = useState(null);
   const [amazonError, setAmazonError] = useState(null);
   const [flipkartError, setFlipkartError] = useState(null);
+  const [myntraError, setMyntraError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,6 +98,39 @@ function Home() {
       setFlipkartLoading(false);
     }
   };
+  const myntraSubmit = async (e) => {
+    e.preventDefault();
+    if (!myntraUrl) {
+      setMyntraError("Please enter a myntra product URL");
+      return;
+    }
+
+    setMyntraLoading(true);
+    setMyntraError(null);
+
+    try {
+      const myntraResponse = await fetch('http://localhost:5000/analyzemyntra', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: myntraUrl }),
+      });
+
+      const myntraResult = await myntraResponse.json();
+      if (!myntraResponse.ok) {
+        throw new Error(myntraResult.error || 'myntra analysis failed');
+      }
+      setMyntraData(myntraResult);
+    } catch (err) {
+      setMyntraError(err.message || 'Failed to analyze myntra URL. Please try again.');
+      console.error('Error:', err);
+    } finally {
+      setMyntraLoading(false);
+    }
+  };
+  
+
 
   const renderStarDistribution = (ratingDistribution, totalRatings) => {
     return (
@@ -369,6 +406,152 @@ function Home() {
         },
       ],
     };
+    
+
+    const intensityData = {
+      labels: ["Positive", "Negative"],
+      datasets: [
+        {
+          label: "Positive",
+          data: [data.fsentimentScores?.positive || 0, 0],
+          backgroundColor: "#00da0b",
+          borderRadius: 4,
+        },
+        {
+          label: "Negative",
+          data: [0, data.fsentimentScores?.negative || 0],
+          backgroundColor: "#ff0000",
+          borderRadius: 4,
+        },
+      ],
+    };
+
+    return (
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-white mb-4 text-center">
+          FLIPKART Analysis Results
+        </h2>
+        
+        {/* Product Details Section */}
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md w-full max-w-5xl mb-8">
+          <div className="flex items-start gap-8">
+            {data.fproductDetails?.fproductImage && (
+              <div className="w-48 h-48 overflow-hidden rounded-lg bg-white p-2">
+                <img 
+                  src={data.fproductDetails.fproductImage} 
+                  alt="Product" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-white mb-4">
+                {data.fproductDetails?.fproductName || 'Product Analysis'}
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#1E293B] p-4 rounded-lg">
+                  <p className="text-gray-400">Total Reviews</p>
+                  <p className="text-2xl font-bold text-white">{data.freviewCount}</p>
+                </div>
+                <div className="bg-[#1E293B] p-4 rounded-lg">
+                  <p className="text-gray-400">Average Score</p>
+                  <p className="text-2xl font-bold text-white">{data.fproductDetails.faverageScore}/5</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-5xl">
+          <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md">
+            <h2 className="text-lg font-semibold mb-4 text-gray-200">
+              Sentiment Distribution
+            </h2>
+            <div className="h-64">
+              <Doughnut data={sentimentData} options={chartOptions} />
+            </div>
+          </div>
+          <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md">
+            <h2 className="text-lg font-semibold mb-4 text-gray-200">
+              Review Intensity
+            </h2>
+            <div className="h-64">
+              <Bar data={intensityData} options={chartOptions} />
+            </div>
+          </div>
+        </div>
+
+        {/* Star Distribution Section */}
+        {renderStarDistribution(data.fproductDetails.fratingDistribution, data.fproductDetails.ftotalRatings)}
+
+        {/* Sentiment Summary */}
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md mt-8 w-full max-w-5xl">
+          <h2 className="text-lg font-semibold mb-4 text-gray-200">
+            Sentiment Summary
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-[#1E293B] p-4 rounded-lg text-center">
+              <p className="text-green-400 text-2xl font-bold">
+                {((data.fsentimentData.positive / data.freviewCount) * 100).toFixed(1)}%
+              </p>
+              <p className="text-gray-400 mt-1">Positive</p>
+            </div>
+            <div className="bg-[#1E293B] p-4 rounded-lg text-center">
+              <p className="text-yellow-400 text-2xl font-bold">
+                {((data.fsentimentData.neutral / data.freviewCount) * 100).toFixed(1)}%
+              </p>
+              <p className="text-gray-400 mt-1">Neutral</p>
+            </div>
+            <div className="bg-[#1E293B] p-4 rounded-lg text-center">
+              <p className="text-red-400 text-2xl font-bold">
+                {((data.fsentimentData.negative / data.freviewCount) * 100).toFixed(1)}%
+              </p>
+              <p className="text-gray-400 mt-1">Negative</p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Feedback Section */}
+        <div className="bg-[#111827] p-6 rounded-2xl shadow-xl border border-gray-700 backdrop-blur-md mt-8 w-full max-w-5xl">
+          <h2 className="text-lg font-semibold mb-4 text-gray-200">AI Feedback [Flipkart] </h2>
+          <div className="text-base text-gray-300 space-y-3 leading-relaxed">
+              {data.aiFeedback ? (
+                  data.aiFeedback.split("\n").map((line, index) => {
+                      let formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-100">$1</strong>');
+
+                      return <p key={index} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+                  })
+              ) : (
+                  <p>N/A</p>
+              )}
+          </div>
+          <div className="mt-4 text-gray-300">
+              <p>Total Reviews Scraped: <strong>{data.freviewCount}</strong></p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+    const rendermyntraFeedback = (data) => {
+      if (!data) return null;
+  
+      const sentimentData = {
+        labels: ['Positive', 'Negative', 'Neutral'],
+        datasets: [
+          {
+            data: [
+              data.fsentimentData.positive,
+              data.fsentimentData.negative,
+              data.fsentimentData.neutral
+            ],
+            backgroundColor: ["#00da0b", "#ff0000", "#fbff00"],
+            borderWidth: 0,
+            hoverOffset: 20,
+          },
+        ],
+      };
 
     const intensityData = {
       labels: ["Positive", "Negative"],
@@ -496,7 +679,10 @@ function Home() {
     );
   };
 
+
+
   return (
+    <>
     <div className="w-full min-h-screen p-8 bg-[#0F172A] flex flex-col items-center">
       {/* Search Form */}
       <form onSubmit={handleSubmit} className="w-full max-w-2xl mb-8">
@@ -532,6 +718,7 @@ function Home() {
           </div>
         )}
       </form>
+     
 
       {/* Flipkart Form */}
       <form onSubmit={handleFlipkartSubmit} className="w-full max-w-2xl mb-8">
@@ -565,13 +752,50 @@ function Home() {
             {flipkartError}
           </div>
         )}
+      
+      </form>
+      {/* Myntra Form */}
+      <form onSubmit={myntraSubmit} className="w-full max-w-2xl mb-8">
+        <div className="flex flex-col gap-4">
+          <div className="flex w-full gap-3">
+            <input
+              type="text"
+              placeholder="Enter myntra product URL"
+              value={myntraUrl}
+              onChange={(e) => setMyntraUrl(e.target.value)}
+              className="flex-1 px-4 py-3 bg-black/70 backdrop-blur-md rounded-lg text-white placeholder-gray-400 border border-gray-700"
+            />
+            <div className="flex items-center">
+              <img 
+                src="/myntra.jpeg" 
+                alt="myntra Logo" 
+                className="w-10 h-10 ml-2"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={myntraLoading}
+            className="w-full px-8 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-blue-500 transition-all shadow-lg disabled:opacity-50"
+          >
+            {myntraLoading ? 'Analyzing...' : 'Analyze myntra'}
+          </button>
+        </div>
+        {myntraError && (
+          <div className="mt-2 text-red-500 bg-red-500/10 p-2 rounded">
+            {myntraError}
+          </div>
+        )}
       </form>
 
       {/* Analysis Results */}
       {amazonData && renderAnalysis(amazonData, 'amazon')}
       {flipkartData && renderFlipkartFeedback(flipkartData)}
+      {myntraData && rendermyntraFeedback(myntraData)}
     </div>
+    </>
   );
 }
 
-export default Home;
+
+export default Home_;
