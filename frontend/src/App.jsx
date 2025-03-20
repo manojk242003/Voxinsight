@@ -3,7 +3,7 @@
 import React from "react"
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
-import Home_ from "./pages/Home"
+import Home from "./pages/Home"
 import Profile from "./pages/Profile"
 import Layout from "./components/Layout"
 import "./App.css" // Add this import
@@ -25,7 +25,7 @@ function App() {
             element={
               isLoggedIn ? (
                 <Layout>
-                  <Home_ />
+                  <Home />
                 </Layout>
               ) : (
                 <Navigate to="/login" replace />
