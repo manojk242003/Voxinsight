@@ -3,6 +3,7 @@
 import React from "react"
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
+import SignUp from "./pages/SignUp"
 import Home from "./pages/Home"
 import Profile from "./pages/Profile"
 import Layout from "./components/Layout"
@@ -15,11 +16,16 @@ function App() {
     setIsLoggedIn(true)
   }
 
+  const handleSignUp = () => {
+    setIsLoggedIn(true)
+  }
+
   return (
     <Router>
       <div className="  app-container">
         <Routes>
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/signup" element={<SignUp onSignUp={handleSignUp} />} />
           <Route
             path="/"
             element={
