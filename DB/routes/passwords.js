@@ -37,7 +37,6 @@ router.get("/users/:id", async (req, res) => {
 //Post
 router.post("/users", async (req, res) => {
    try {
-    //    console.log("Received data:", req.body);
        const {username, password} = req.body;
 
        if (!username || !password) {
@@ -45,9 +44,9 @@ router.post("/users", async (req, res) => {
        }
 
        const user1 = Passwords.find(username);
-       if(user1.username)
+       if(user1)
        {
-         return res.send("username already exits")
+         return;
        }
 
        const hashedPassword = await bcrypt.hash(password, parseInt(process.env.SALT_ROUNDS));
