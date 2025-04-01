@@ -63,3 +63,9 @@ body {
   background: #555;
 }
 
+.redText{
+  color: rgba(255, 0, 0, 0.39);
+  background-color: rgba(255, 0, 0, 0.095);
+  margin-top: 0;
+  padding-top: 0;
+}

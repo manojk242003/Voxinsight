@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../../../VoxInsight"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}
