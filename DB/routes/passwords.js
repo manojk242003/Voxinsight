@@ -43,7 +43,7 @@ router.post("/users", async (req, res) => {
            return res.status(400).json({ message: "Username and password required" });
        }
 
-       const user1 = Passwords.find(username);
+       const user1 = await Passwords.findOne({username});
        if(user1)
        {
          return;
