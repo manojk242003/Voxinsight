@@ -1,18 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios  from "axios";
+import bcryptjs from "bcryptjs";
+// require("dotenv").config();
 
 function Login({ onLogin }) {
+
+  useEffect(()=> {
+    setUsername("");
+    setPassword("");
+    setIncorrectP(0);
+    setIncorrectU(0)
+  }, []);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [incorrectp, setIncorrectP] = useState(0);
+  const [incorrectu, setIncorrectU] = useState(0);
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onLogin();
-    navigate("/");
+  const fetchData = async (username, password) => {
+    try {
+      const response = await axios.get("http://localhost:3000/password/users");
+      if (!response.ok) {
+        console.log("Network response was not ok");
+      }
+      const users = response.data;
+      // console.log(users)
+      
+      const user = users.find((user) => user.username === username);
+      // console.log(user)
+
+      if(!user)
+      {
+        setIncorrectU(1);
+      }
+
+      const comparison = await bcryptjs.compare(password, user.password)
+      if(comparison) {
+        navigate("/")
+      } else {
+        setIncorrectP(1);
+        
+        navigate("/login");
+      }
+
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
+
+  const handleSubmit= async(e) => {
+    e.preventDefault();
+    
+    await fetchData(username, password);
+    onLogin();
+    // navigate('/login')
+  };
+
+  
+  
+  
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -39,9 +92,10 @@ function Login({ onLogin }) {
                 className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all"
                 placeholder="Enter your username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {setUsername(e.target.value); setIncorrectU(0)}}
               />
             </div>
+            {(incorrectu === 1) && <div className="redText">Invalid Username</div>}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Password
@@ -54,9 +108,10 @@ function Login({ onLogin }) {
                 className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {setPassword(e.target.value); setIncorrectP(0)}}
               />
             </div>
+            {incorrectp === 1 && <div className="redText">Incorrect Password</div>}
           </div>
 
           <div className="flex justify-between items-center mt-4 text-sm text-gray-400">

@@ -1,24 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 function SignUp({ onSignUp }) {
+
+  useEffect(()=>{
+    setUsername('');
+    setConfirmPassword("");
+    setPassword("");
+    setEmail("");
+    setDuplicate(0);
+  }, [])
+
+  
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
+  const [duplicate, setDuplicate] = useState(0);
 
-  const handleSubmit = (e) => {
+  const newUser = async(username, password) => {
+    const data = {
+      "username": username,
+      "password": password
+    }
+
+    const user =  await fetch("http://localhost:3000/password/users", {
+      method: "POST",  
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if(!user.ok) {
+      console.log("Error posting data")
+    }
+  }
+
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
+    await newUser(username, password);
     onSignUp();
-    navigate("/");
+    if(duplicate){
+      navigate('/signup')
+    } else {
+      navigate('/')
+    }
   };
+
+  const checkDuplicate = async(e) => {
+    setDuplicate(0);
+    setUsername(e);
+    const response = await axios.get("http://localhost:3000/password/users");
+    const userData = response.data;
+    const user = userData.find((user) => user.username === e);
+    if(user){
+      setDuplicate(1);
+    }
+
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -45,9 +92,10 @@ function SignUp({ onSignUp }) {
                 className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all"
                 placeholder="Choose a username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => checkDuplicate(e.target.value)}
               />
             </div>
+            {duplicate === 1 && <div className="redText">Username already exists</div>}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 Email
