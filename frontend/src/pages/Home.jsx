@@ -653,40 +653,7 @@ function Home() {
 
   return (
     <div className="w-full min-h-screen p-8 bg-[#0F172A] flex flex-col items-center">
-      {/* Search Form */}
-      <form onSubmit={handleSubmit} className="w-full max-w-2xl mb-8">
-        <div className="flex flex-col gap-4">
-          <div className="flex w-full gap-3">
-            <input
-              type="text"
-              placeholder="Enter Amazon product URL"
-              value={amazonUrl}
-              onChange={(e) => setAmazonUrl(e.target.value)}
-              className="flex-1 px-4 py-3 bg-black/70 backdrop-blur-md rounded-lg text-white placeholder-gray-400 border border-gray-700"
-            />
-            <div className="flex items-center">
-              <img 
-                src="/amazon-logo.png"
-                
-                alt="Amazon Logo" 
-                className="w-10 h-10 ml-2"
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={amazonLoading}
-            className="w-full px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg disabled:opacity-50"
-          >
-            {amazonLoading ? 'Analyzing...' : 'Analyze Amazon'}
-          </button>
-        </div>
-        {amazonError && (
-          <div className="mt-2 text-red-500 bg-red-500/10 p-2 rounded">
-            {amazonError}
-          </div>
-        )}
-      </form>
+    
 
       {/* Flipkart Form */}
       <form onSubmit={handleFlipkartSubmit} className="w-full max-w-2xl mb-8">
@@ -755,11 +722,46 @@ function Home() {
           </div>
         )}
       </form>
+        {/* Search Form */}
+        <form onSubmit={handleSubmit} className="w-full max-w-2xl mb-8">
+        <div className="flex flex-col gap-4">
+          <div className="flex w-full gap-3">
+            <input
+              type="text"
+              placeholder="Enter Amazon product URL"
+              value={amazonUrl}
+              onChange={(e) => setAmazonUrl(e.target.value)}
+              className="flex-1 px-4 py-3 bg-black/70 backdrop-blur-md rounded-lg text-white placeholder-gray-400 border border-gray-700"
+            />
+            <div className="flex items-center">
+              <img 
+                src="/amazon-logo.png"
+                
+                alt="Amazon Logo" 
+                className="w-10 h-10 ml-2"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={amazonLoading}
+            className="w-full px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg disabled:opacity-50"
+          >
+            {amazonLoading ? 'Analyzing...' : 'Analyze Amazon'}
+          </button>
+        </div>
+        {amazonError && (
+          <div className="mt-2 text-red-500 bg-red-500/10 p-2 rounded">
+            {amazonError}
+          </div>
+        )}
+      </form>
 
       {/* Analysis Results */}
-      {amazonData && renderAnalysis(amazonData, 'amazon')}
+    
       {flipkartData && renderFlipkartFeedback(flipkartData)}
       {myntraData && renderMyntraFeedback(myntraData)}
+      {amazonData && renderAnalysis(amazonData, 'amazon')}
     </div>
   );
 }
