@@ -1,7 +1,7 @@
 function Profile() {
   const user = {
-    name: "User-1",
-    username: "user1",
+    name: "Kunal Katkar",
+    username: "KunalK",
     avatar: "/Avatar.png",
     history: [
       { id: 1, product: "Smartphone", date: "2023-05-01" },

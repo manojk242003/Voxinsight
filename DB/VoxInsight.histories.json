@@ -1,0 +1,74 @@
+[{
+  "_id": {
+    "$oid": "67d2dfc1e4c094ee37a64c7e"
+  },
+  "username": "manojbarki13",
+  "history": [
+    {
+      "product_name": "Realme 12 Pro 5g",
+      "URL": "https://www.amazon.com/realme-12-Pro-Smartphone-Snapdragon/dp/B0DSHFDQGL/ref=sr_1_3?crid=1NPIBEU3NVQMU&dib=eyJ2IjoiMSJ9.adq8528TdBJ_C_RjlHFxFb--dk16yetLOhkVrvEkFYe-HcbeR_NhE390kV5U3fAHu2xf5J8rxmmwdWq84gi1_M7rcPZLbIERGI_PbkqARWuKR3Dke1tH8D3dAaNgNWBkvq3Xzt3lVXaSVCdMf9HZ6IWebfMvkkMAKYi-9AfeNIykzjqyBCYBamwMgp24y38TijQhaWd3CWzcnEzSQRykvjPMKjiIfFEAS8ghP7AQIrg.m3skV3Xzp4T5V-4MXZkhOra7F9-GkEMJCOJPT8V9uZo&dib_tag=se&keywords=realme%2B12%2Bpro%2Bplus%2B5g&qid=1741872961&sprefix=realme%2B12%2B%2Caps%2C601&sr=8-3&th=1",
+      "image_url": "https://m.media-amazon.com/images/I/71cwHrkPTML._AC_SX679_.jpg",
+      "_id": {
+        "$oid": "67d2dfc1e4c094ee37a64c7f"
+      }
+    },
+    {
+      "product_name": "One plus nord 3 wireless earbuds",
+      "URL": "https://www.amazon.com/OnePlus-Wireless-Cancellation-Charging-Playback/dp/B0DFPKVGVC/ref=sr_1_1_sspa?crid=SH3AZPJMO2IZ&dib=eyJ2IjoiMSJ9.VdJ2OhdzEEeBPwHDbvfiJCTxIqV_GwF5fMUBmhF852WMCTjZV3B6gztq8GOqD94fmYbe7kcjZtRSJLVHImqPEBs_NgUf8xfzM1-zoh247gcwVokkbXXoraVksL0JzVpGO-AF5PtP0eVVkuB2pdA-5Rcb81KGp7OR8ZgU3y0x4GDJh6mDUY57mUirDAHe0mpXFTAkT4DyMbuynnD55pGbw0Is7UW76FmN_I4kmHZcyyg.RAjwbawBFqBZu5qg7L3VBEWEHBfucoxYda8CfXEJbIQ&dib_tag=se&keywords=oneplus%2Bearbuds&qid=1741873036&sprefix=%2Caps%2C783&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1",
+      "image_url": "https://m.media-amazon.com/images/I/51Xdv5a4cXL._AC_SX679_.jpg",
+      "_id": {
+        "$oid": "67d2dfc1e4c094ee37a64c80"
+      }
+    },
+    {
+      "product_name": "HP Victus 16 Gaming Laptop",
+      "URL": "https://www.amazon.com/HP-i7-12700H-GeForce-Graphic-Backlit/dp/B0D9L9HFNH/ref=sr_1_3?crid=8G3G53QV6SF8&dib=eyJ2IjoiMSJ9.aKDzoe3W5ZObJDB5eEVOa5ZL47LLQDpQNzmSFTnTwWpgYMCA7osnt8UqLEK54kuTLsZe8nUMgWXJ8Fcrqu_KyebM5l6Wxn05ffkCYvByFrcdx5sVTi3fc9zXtRivb3w5ANHeLmlO0m17ydBLXY_ekPuEI4jeo43A8omAaLdpOS5bnlbJAsc2aA_qKPbwTsVEP9VL16oq5nEGITHLbUGtdziPhKbDpisYBrobwzNWZ0g.SPD3tX27CEnYXtZ065_rvHy2wEs5nxpzTWMGzvkdZrQ&dib_tag=se&keywords=hp%2Bvictus%2B16&qid=1741873901&sprefix=%2Caps%2C2688&sr=8-3&th=1",
+      "image_url": "https://m.media-amazon.com/images/I/71LbcDdFmIL._AC_SX466_.jpg",
+      "_id": {
+        "$oid": "67d2e4eba671d713572fe17e"
+      }
+    }
+  ],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67e8235533eafcc35192db79"
+  },
+  "username": "KunalKattar",
+  "history": [
+    {
+      "product_name": "Realme 12 Pro 5g",
+      "URL": "https://www.amazon.com/realme-12-Pro-Smartphone-Snapdragon/dp/B0DSHFDQGL/ref=sr_1_3?crid=1NPIBEU3NVQMU&dib=eyJ2IjoiMSJ9.adq8528TdBJ_C_RjlHFxFb--dk16yetLOhkVrvEkFYe-HcbeR_NhE390kV5U3fAHu2xf5J8rxmmwdWq84gi1_M7rcPZLbIERGI_PbkqARWuKR3Dke1tH8D3dAaNgNWBkvq3Xzt3lVXaSVCdMf9HZ6IWebfMvkkMAKYi-9AfeNIykzjqyBCYBamwMgp24y38TijQhaWd3CWzcnEzSQRykvjPMKjiIfFEAS8ghP7AQIrg.m3skV3Xzp4T5V-4MXZkhOra7F9-GkEMJCOJPT8V9uZo&dib_tag=se&keywords=realme%2B12%2Bpro%2Bplus%2B5g&qid=1741872961&sprefix=realme%2B12%2B%2Caps%2C601&sr=8-3&th=1",
+      "image_url": "https://m.media-amazon.com/images/I/71cwHrkPTML._AC_SX679_.jpg",
+      "_id": {
+        "$oid": "67e833291550a839d4af1638"
+      }
+    }
+  ],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ebcaaeea40e015089db997"
+  },
+  "username": "Chetasi",
+  "history": [],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ec54064f5266bb91fe761d"
+  },
+  "username": "Prajwal123",
+  "history": [],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ecf4e179afbbf1928ecd18"
+  },
+  "username": "partha",
+  "history": [],
+  "__v": 0
+}]

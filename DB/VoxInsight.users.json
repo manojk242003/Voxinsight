@@ -1,0 +1,39 @@
+[{
+  "_id": {
+    "$oid": "67dd350bc2cba3e78fd41e5b"
+  },
+  "username": "manojbarki13",
+  "password": "$2b$08$H42o.9H6ohxFVkKaksJOyesRh3tLgvHD50LBgqlCz4LCjO7JPXPCu"
+},
+{
+  "_id": {
+    "$oid": "67e8235533eafcc35192db77"
+  },
+  "username": "KunalKattar",
+  "password": "$2b$08$Y8elemZQVXm6dr6flBDS7uxZg3B5VqBuDMUFHo0Kc0nGoeC3U69nq",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ebcaaeea40e015089db995"
+  },
+  "username": "Chetasi",
+  "password": "$2b$08$zsU3Yb/J6kxbY/30xNSKBurex0YbLZ8TKCHYfuur.Tp3VqS3wzPRi",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ec54064f5266bb91fe761b"
+  },
+  "username": "Prajwal123",
+  "password": "$2b$08$NlrPWYLhldSxYrkKPkcjAOqQQR9KHH4100gEXiJa2ATmmGs.szRMm",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ecf4e179afbbf1928ecd16"
+  },
+  "username": "partha",
+  "password": "$2b$08$B58Vm3eXMMqIZQzpAZ98rO19zPL/dArbr334543TOJ2VCL8ssYjMe",
+  "__v": 0
+}]
